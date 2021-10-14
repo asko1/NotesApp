@@ -8,7 +8,11 @@ namespace NotesApp.CommandLine
     {
         static void Main(string[] args)
         {
-            List<Note> Notes = new List<Note>();
+            var sqlService = new SqlService();
+            var conn = sqlService.CreateConnection();
+            sqlService.CreateTable(conn);
+
+            var Notes = sqlService.ReadData(conn);
 
             var run = true;
             while (run)
@@ -30,17 +34,21 @@ namespace NotesApp.CommandLine
                         {
                             Console.WriteLine($"Pealkiri: {note.Heading}");
                             Console.WriteLine($"Kirjeldus: {note.Content} ");
-                            Console.WriteLine($"Aeg: {note.ChangeDateTime} \n");
+                            Console.WriteLine($"Aeg: {note.Datetime} \n");
                         }                        
                         break;
 
                     case 2:
                         Console.WriteLine("Pealkiri: ");
                         var title = Console.ReadLine();
+
                         Console.WriteLine("Kirjeldus: ");
                         var desc = Console.ReadLine();
-                        var n = new Note(Guid.NewGuid().ToString(), title, desc, DateTime.Now);
-                        Notes.Add(n);
+
+                        var newNote = new Note(Guid.NewGuid().ToString(), title, desc, DateTime.Now);
+                        Notes.Add(newNote);
+                        sqlService.InsertData(conn, newNote);
+
                         Console.WriteLine("Märge lisatud!");
                         break;
 
@@ -49,9 +57,11 @@ namespace NotesApp.CommandLine
                         {
                             Console.WriteLine($"{i}: {Notes[i].Heading}");
                         }
+
                         answer = int.Parse(Console.ReadLine());
                         Console.WriteLine("1. Pealkiri\n2. Kirjeldus");
                         int answer2 = int.Parse(Console.ReadLine());
+
                         if (answer2 == 1)
                         {
                             Console.WriteLine("Uus pealkiri: ");
@@ -61,6 +71,7 @@ namespace NotesApp.CommandLine
                             Console.WriteLine("Uus kirjeldus: ");
                             Notes[answer].Content = Console.ReadLine();
                         }
+                        sqlService.ModifyData(conn, Notes[answer]);
                         break;
 
                     case 4:
@@ -70,6 +81,7 @@ namespace NotesApp.CommandLine
                         }
                         answer = int.Parse(Console.ReadLine());
                         Notes.RemoveAt(answer);
+                        sqlService.DeleteData(conn, Notes[answer]);
                         Console.WriteLine("Edukalt eemaldatud!");
                         break;
 
